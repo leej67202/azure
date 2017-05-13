@@ -1,0 +1,140 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+"parameters": {
+  "resourcePrefix": {
+      "type": "string",
+      "maxLength": 10,
+      "defaultValue": "prefix",
+      "metadata": {
+      "description": "Resource prefix"
+      }
+    },
+  "managedDiskNamePrefix": {
+    "type": "string",
+    "maxLength": 10,
+    "defaultValue": "mddisk01",
+    "metadata": {
+      "description": "Disk name prefix"
+    }
+  },
+"managedDiskAccountType": {
+    "type": "string",
+    "allowedValues": [
+      "Standard_LRS",
+      "Premium_LRS"
+        ],
+    "defaultValue": "Standard_LRS"
+    },
+"managedDiskOSType": {
+    "type": "string",
+    "allowedValues": [
+      "Windows",
+      "Linux"
+        ],
+    "defaultValue": "Windows"
+    },
+"managedDiskCreateOption": {
+    "type": "string",
+    "allowedValues": [
+      "Empty",
+      "Attach",
+      "FromImage",
+      "Import",
+      "Copy",
+      "Restore"
+        ],
+    "defaultValue": "Empty"
+    },
+  "managedDiskSize": {
+    "type": "int",
+    "allowedValues": [
+        128,
+        512,
+        1024
+        ],
+    "defaultValue": 128
+        },
+  "serviceTagDept": {
+    "type": "string",
+    "allowedValues": [
+      "IT Ops",
+      "IT Dev",
+      "Finance",
+      "Marketing",
+      "Management",
+      "Sales",
+      "HR"
+    ],
+    "defaultValue": "IT Ops",
+    "metadata": {
+      "description": "The service Tag value for the company"
+    }
+  },
+    "serviceTagEnvironment": {
+      "type": "string",
+      "allowedValues": [
+        "Production",
+        "Staging",
+        "QA",
+        "Development"
+      ],
+      "defaultValue": "Staging",
+      "metadata": {
+        "description": "Tag for Enviroment"
+    }
+  },
+    "serviceTagDataProfile": {
+      "type": "string",
+      "allowedValues": [
+        "Confidential",
+        "Restricted",
+        "Internal",
+        "Public"
+      ],
+      "defaultValue": "Internal",
+      "metadata": {
+        "description": "Tag for sensitivity"
+    }
+  }
+},
+"variables": {
+  "resourcePrefix": "[parameters('resourcePrefix')]",
+  "managedDiskName": "[concat(variables('resourcePrefix'),parameters('managedDiskNamePrefix'))]"
+},
+  "resources": [
+{
+    "comments": "creating managed disks - https://docs.microsoft.com/en-us/azure/templates/microsoft.compute/disks",
+    "type": "Microsoft.Compute/disks",
+    "name": "[variables('managedDiskName')]",
+    "apiVersion": "2016-04-30-preview",
+    "location": "[resourceGroup().location]",
+        "tags": {
+          "Department": "[parameters('serviceTagDept')]",
+          "Owner": "[parameters('serviceTagDept')]",
+          "Cost Centre": "[parameters('serviceTagDept')]",
+          "Environment": "[parameters('serviceTagEnvironment')]",
+          "Data Profile": "[parameters('serviceTagDataProfile')]"
+            },
+    "properties": {
+    "accountType": "[parameters('managedDiskAccountType')]",
+    "osType": "[parameters('managedDiskOSType')]",
+    "creationData": {
+        "createOption": "[parameters('managedDiskCreateOption')]"
+                },
+    "diskSizeGB": "[int(parameters('managedDiskSize'))]"
+        },
+    "dependsOn": []
+        }
+],
+  "outputs": {
+    "deployDiskResult": {
+      "value": "[reference(concat('Microsoft.Compute/disks/', variables('managedDiskName')),providers('Microsoft.Compute', 'disks').apiVersions[0])]",
+      "type" : "object"
+    },
+    "deployDiskIdResult": {
+      "value": "[resourceId('Microsoft.Compute/disks/', variables('managedDiskName'))]",
+      "type" : "string"
+    }
+  }
+}
